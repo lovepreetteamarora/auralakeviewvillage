@@ -1,0 +1,31 @@
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+*.pem
+.env*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# The reference PDFs that were dropped in the project root (screen captures,
+# scratch downloads) stay out of the repo...
+*.pdf
+# ...but the gated floor plans are application data. /api/floorplans reads them
+# off disk at request time, so if they are not committed the download route
+# returns 500 in production.
+!assets/floorplans/*.pdf
+
+# The builder's source kit: ~133 MB of .ai/.eps/master renderings. It is the
+# provenance for lib/project.ts, but the web assets derived from it already
+# live in public/ and assets/. Keep the originals out of git.
+Mississauga - Aura - Lakeview Village/
+
+# Editor and agent-local settings — machine-specific, not project config.
+.vscode/
+.claude/settings.local.json
