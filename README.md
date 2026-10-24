@@ -215,3 +215,20 @@ Caivan, Lakeview Village, or RARE Real Estate (the exclusive listing brokerage),
 that figures are preliminary and subject to change, that renderings are artist's
 concepts, and that the site is not intended to solicit buyers or sellers already
 under contract. Keep it in the footer.
+
+## Google Analytics / Tag Manager (October 24, 2026)
+
+Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` to Aura's existing `G-KW3PGN36N7`, or set
+`NEXT_PUBLIC_GTM_ID` to a real GTM container. IDs only; redeploy after changes.
+GTM takes priority if both are supplied. `NEXT_PUBLIC_GA_ID` remains a legacy
+fallback. No property ID is hard-coded in the tracking component.
+
+Direct GA4 sends initial and client-navigation page views and `generate_lead`
+after the server confirms a saved enquiry and unlocks floor plans. GTM receives
+the same custom event via dataLayer. It includes project/form identifiers and a
+unique transaction ID; no names, email addresses or phone numbers are included.
+For manual navigation measurement, disable automatic browser-history page views
+in GA4 if they duplicate manual events. Configure Ads conversion tags and consent
+separately; neither a consent banner nor Consent Mode is installed by this change.
+Aura's existing vault/unlock behaviour remains in place, and Five Oaks' property
+ID must not be used here.

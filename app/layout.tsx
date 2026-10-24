@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Analytics } from "@/components/Analytics";
+import { GoogleTracking, GoogleTagManagerNoScript } from "@/components/GoogleTracking";
 import { Jost, Fraunces } from "next/font/google";
 import "./globals.css";
 import { ADDRESS, PHASE, PRICING, PROJECT, SITE_URL } from "@/lib/project";
@@ -66,8 +66,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-CA" className={`${jost.variable} ${fraunces.variable}`}>
       <body>
+        <GoogleTagManagerNoScript/>
+        <GoogleTracking/>
         {children}
-        <Analytics />
       </body>
     </html>
   );

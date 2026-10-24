@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackLeadConversion } from "@/lib/track-lead-conversion";
 
 type Variant = "light" | "dark";
 
@@ -34,6 +35,7 @@ export function RegisterForm({
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (status === "sending") return;
     setStatus("sending");
     const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
@@ -43,6 +45,8 @@ export function RegisterForm({
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error(String(res.status));
+      const result = await res.json() as { unlocked?: boolean };
+      if (result.unlocked) trackLeadConversion();
       setStatus("done");
       onSuccess?.();
     } catch {
