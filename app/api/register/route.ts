@@ -3,27 +3,8 @@ import { ACCESS_COOKIE, ACCESS_COOKIE_OPTIONS, issueAccessToken } from "@/lib/ac
 import { saveLead } from "@/lib/leads";
 
 /**
- * Lead capture endpoint, and the only thing that issues floor plan access.
- *
- * Leads are written to the shared Supabase `leads` table — one table across
- * every Team Arora landing page, stamped with this site's project slug. That
- * is the system of record.
- *
- * This route stays same-origin on purpose. A shared endpoint on another host
- * could capture the lead, but it could not set the httpOnly cookie that
- * unlocks the floor plans: that is a third-party cookie, which Safari and
- * Firefox block outright. One table, many same-origin routes.
- *
- * LEAD_WEBHOOK_URL is an optional second hop: set it to a CRM
- * endpoint (Follow Up Boss, Zapier, Make, an internal handler) and every valid
- * lead is POSTed there as JSON. With the variable unset the route still
- * validates and returns 200, but the lead only reaches the server log — which
- * is fine for local development and is NOT acceptable in production.
- *
- * The submitter never sees a delivery failure. A lead that reaches us but
- * fails to forward is our problem to recover from the logs; showing the buyer
- * an error would only cost the second submission too — and here it would also
- * withhold the download they just traded their details for.
+ * Validate and persist the enquiry before issuing floor-plan access.
+ * The optional CRM webhook runs only after a confirmed database save.
  */
 
 export const runtime = "nodejs";
@@ -133,16 +114,13 @@ export async function POST(req: Request) {
     ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
   });
 
-  // If the database write failed, the log is the only remaining copy — so log
-  // the whole lead, loudly, rather than a bare error code.
-  if (!stored) console.error("[lead] NOT PERSISTED, recover from here:", lead);
+  if (!stored) {
+    return NextResponse.json({ error: "Your request could not be saved. Please try again shortly." }, { status: 503 });
+  }
 
   await forward(lead);
 
-  // Unlock the floor plan vault for this browser. Deliberately issued after
-  // validation but regardless of whether storage or the CRM hand-off
-  // succeeded: the visitor has held up their end, and an outage on our side is
-  // not their problem.
+  // Unlock floor plans only after the enquiry has been saved.
   const res = NextResponse.json({ ok: true, unlocked: true });
   res.cookies.set(ACCESS_COOKIE, issueAccessToken(), ACCESS_COOKIE_OPTIONS);
   return res;

@@ -1,15 +1,9 @@
 import { createHash } from "node:crypto";
 
 /**
- * Lead persistence against the shared Supabase `leads` table.
- *
- * Written with a plain fetch to PostgREST rather than @supabase/supabase-js:
- * this is one authenticated INSERT, and the SDK is ~60 kB of client to do it.
- * If this file ever grows past a couple of queries, swap it for the SDK.
- *
- * SERVICE ROLE KEY. It bypasses row level security and must never reach the
- * browser. It is read here, in a server-only module imported by a route
- * handler — never prefix it with NEXT_PUBLIC_.
+ * Shared Team Arora lead capture. Prefer the project-scoped gateway token;
+ * legacy direct PostgREST credentials remain a server-only fallback.
+ * Never import this module into browser components or expose its credentials.
  */
 
 export type LeadInput = {
@@ -58,19 +52,19 @@ function utm(referer: string) {
 }
 
 export function isConfigured(): boolean {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean((process.env.LEAD_API_URL && process.env.LEAD_API_TOKEN) ||
+    (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY));
 }
 
-/**
- * Returns true if the row landed. Never throws: a failed insert must not cost
- * the visitor their download, and the caller logs the lead either way so it
- * stays recoverable from the server log.
- */
+/** Returns true only after confirmed persistence. The route handles failure. */
 export async function saveLead(lead: LeadInput): Promise<boolean> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !key) {
+  const gateway = process.env.LEAD_API_URL;
+  const token = process.env.LEAD_API_TOKEN;
+
+  if (!(gateway && token) && !(url && key)) {
     console.warn("[lead] Supabase is not configured — lead not persisted");
     return false;
   }
@@ -97,12 +91,11 @@ export async function saveLead(lead: LeadInput): Promise<boolean> {
   };
 
   try {
-    const res = await fetch(`${url}/rest/v1/leads`, {
+    const res = await fetch(gateway && token ? gateway : `${url}/rest/v1/leads`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: key,
-        Authorization: `Bearer ${key}`,
+        ...(gateway && token ? { Authorization: `Bearer ${token}` } : { apikey: key!, Authorization: `Bearer ${key}` }),
         // Keep the response empty; we do not need the row echoed back.
         Prefer: "return=minimal",
       },
