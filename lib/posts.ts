@@ -1,4 +1,5 @@
 import { AURA_FIVE_OAKS_COMPARISON } from "@/lib/aura-five-oaks-comparison";
+import { NAVERA_MAYFIELD_VILLAGE_GUIDE } from "@/lib/navera-mayfield-village-guide";
 import {
   ADDRESS,
   DEPOSIT_TOTAL,
@@ -63,6 +64,7 @@ export function parseInline(text: string): InlineSegment[] {
 }
 
 export const POSTS: Post[] = [
+  NAVERA_MAYFIELD_VILLAGE_GUIDE,
   AURA_FIVE_OAKS_COMPARISON,
   {
     slug: "fan-coil-erv-maintenance-guide",
